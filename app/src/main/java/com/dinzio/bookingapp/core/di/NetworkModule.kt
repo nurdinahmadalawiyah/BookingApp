@@ -1,6 +1,7 @@
 package com.dinzio.bookingapp.core.di
 
 import com.dinzio.bookingapp.core.data.remote.AuthInterceptor
+import com.dinzio.bookingapp.features.auth.data.source.AuthApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -47,5 +48,11 @@ object NetworkModule {
             .addConverterFactory(GsonConverterFactory.create())
             .client(okHttpClient)
             .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideAuthApiService(retrofit: Retrofit): AuthApiService {
+        return retrofit.create(AuthApiService::class.java)
     }
 }

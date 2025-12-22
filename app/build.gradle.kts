@@ -4,6 +4,9 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 
     id("kotlin-kapt")
+    id("com.google.dagger.hilt.android")
+    id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
 }
 
 android {
@@ -60,31 +63,30 @@ dependencies {
     implementation(libs.androidx.compose.material3)
 
     /// DEPENDENCY INJECTION (Hilt)
-//    implementation(libs.hilt.android)
-//    kapt(libs.hilt.android.compiler)
-//    implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.android.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
 
     /// NETWORKING (Retrofit & OkHttp)
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
     implementation(libs.logging.interceptor)
 
-//    /// LOCAL DATABASE (Room & DataStore)
-//    val roomVersion = "2.6.1"
-//    implementation("androidx.room:room-runtime:$roomVersion")
-//    implementation("androidx.room:room-ktx:$roomVersion")
-//    kapt("androidx.room:room-compiler:$roomVersion")
-//    implementation("androidx.datastore:datastore-preferences:1.0.0")
-//
-//    /// WORK MANAGER
-//    implementation("androidx.work:work-runtime-ktx:2.9.0")
-//    implementation("androidx.hilt:hilt-work:1.1.0")
-//    kapt("androidx.hilt:hilt-compiler:1.1.0")
-//
+    /// LOCAL DATABASE (Room & DataStore)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    kapt(libs.androidx.room.compiler)
+    implementation(libs.androidx.datastore.preferences)
+
+    /// WORK MANAGER
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.hilt.work)
+    kapt(libs.androidx.hilt.compiler)
+
     /// FIREBASE
     implementation(platform(libs.firebase.bom))
-    implementation(libs.google.firebase.crashlytics.ktx)
-    implementation(libs.google.firebase.analytics.ktx)
+    implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.analytics)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

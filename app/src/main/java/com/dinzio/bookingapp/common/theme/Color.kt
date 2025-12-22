@@ -1,4 +1,4 @@
-package com.dinzio.bookingapp.ui.theme
+package com.dinzio.bookingapp.common.theme
 
 import androidx.compose.ui.graphics.Color
 

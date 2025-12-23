@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
@@ -23,13 +22,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.dinzio.bookingapp.features.booking.data.local.entity.BookingEntity
+import com.dinzio.bookingapp.features.booking.presentation.component.BookingDetailSheet
 import com.dinzio.bookingapp.features.booking.presentation.component.BookingItem
 import com.dinzio.bookingapp.features.booking.presentation.viewModel.BookingViewModel
 import kotlinx.coroutines.launch
@@ -46,6 +49,9 @@ fun BookingListScreen(
     val listState = rememberLazyListState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+
+    var selectedBooking by remember { mutableStateOf<BookingEntity?>(null) }
+    var showSheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(listState) {
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
@@ -65,6 +71,13 @@ fun BookingListScreen(
     }
 
     Scaffold { padding ->
+        if (showSheet && selectedBooking != null) {
+            BookingDetailSheet(
+                booking = selectedBooking!!,
+                onDismiss = { showSheet = false }
+            )
+        }
+
         PullToRefreshBox(
             isRefreshing = isLoading,
             onRefresh = { viewModel.refresh() },
@@ -94,7 +107,13 @@ fun BookingListScreen(
                     contentPadding = PaddingValues(16.dp)
                 ) {
                     items(bookings, key = { it.bookingid }) { booking ->
-                        BookingItem(booking = booking)
+                        BookingItem(
+                            booking = booking,
+                            onClick = {
+                                selectedBooking = booking
+                                showSheet = true
+                            }
+                        )
                     }
 
                     if (isLoadMoreLoading) {

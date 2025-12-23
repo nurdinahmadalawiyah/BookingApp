@@ -6,22 +6,20 @@ import java.io.IOException
 
 suspend fun <T> safeApiCall(apiCall: suspend () -> T): Resource<T> {
     return try {
-        Resource.Success(apiCall())
+        val response = apiCall()
+        Resource.Success(response)
     } catch (throwable: Throwable) {
         when (throwable) {
             is IOException -> Resource.Error("Masalah koneksi internet")
             is HttpException -> {
-                val code = throwable.code()
-                val message = when (code) {
-                    401 -> "Sesi berakhir atau password salah (401)"
-                    403 -> "Anda tidak memiliki akses (403)"
-                    404 -> "Data tidak ditemukan (404)"
-                    500 -> "Server sedang bermasalah (500)"
-                    else -> "Terjadi kesalahan: $code"
+                val message = when (throwable.code()) {
+                    401 -> "Username atau password salah (401)"
+                    else -> "Kesalahan Server (${throwable.code()})"
                 }
                 Resource.Error(message)
             }
-            else -> Resource.Error("Kesalahan tidak dikenal: ${throwable.message}")
+            // Ini akan menangkap 'throw Exception(response.reason)' dari Repository kamu
+            else -> Resource.Error(throwable.message ?: "Kesalahan tidak dikenal")
         }
     }
 }

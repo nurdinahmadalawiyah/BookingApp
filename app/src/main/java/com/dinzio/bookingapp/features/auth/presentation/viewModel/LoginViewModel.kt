@@ -23,26 +23,9 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             loginUseCase(username, password).collect { result ->
                 when (result) {
-                    is Resource.Loading -> {
-                        _state.update { it.copy(isLoading = true, error = null) }
-                    }
-                    is Resource.Success -> {
-                        _state.update {
-                            it.copy(
-                                isLoading = false,
-                                token = result.data,
-                                isLoginSuccess = true
-                            )
-                        }
-                    }
-                    is Resource.Error -> {
-                        _state.update {
-                            it.copy(
-                                isLoading = false,
-                                error = result.message
-                            )
-                        }
-                    }
+                    is Resource.Loading -> _state.value = LoginState(isLoading = true)
+                    is Resource.Success -> _state.value = LoginState(isLoginSuccess = true)
+                    is Resource.Error -> _state.value = LoginState(error = result.message)
                 }
             }
         }

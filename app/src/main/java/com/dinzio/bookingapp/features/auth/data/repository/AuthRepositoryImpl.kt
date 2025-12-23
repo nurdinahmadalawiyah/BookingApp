@@ -16,13 +16,22 @@ class AuthRepositoryImpl @Inject constructor(
 ) : AuthRepository {
     override fun login(username: String, password: String): Flow<Resource<String>> = flow {
         emit(Resource.Loading())
+
         val result = safeApiCall {
             val response = apiService.login(AuthRequest(username, password))
+
             response.token
+                ?: if (response.reason != null) {
+                    throw Exception(response.reason)
+                } else {
+                    throw Exception("Terjadi kesalahan tidak dikenal")
+                }
         }
+
         if (result is Resource.Success) {
             result.data?.let { tokenManager.saveToken(it) }
         }
+
         emit(result)
     }
 }

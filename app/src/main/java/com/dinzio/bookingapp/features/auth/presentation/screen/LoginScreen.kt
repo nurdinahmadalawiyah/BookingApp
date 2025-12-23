@@ -2,6 +2,7 @@ package com.dinzio.bookingapp.features.auth.presentation.screen
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
@@ -12,7 +13,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -33,6 +37,8 @@ fun LoginScreen(
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    val passwordFocusRequester = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
     val isFormValid by remember {
         derivedStateOf {
             username.isNotBlank() && password.isNotBlank()
@@ -44,21 +50,25 @@ fun LoginScreen(
 
     LaunchedEffect(state.isLoginSuccess, state.error) {
         if (state.isLoginSuccess) {
-            snackbarHostState.showSnackbar("Login Berhasil!")
-            onLoginSuccess()
+            scope.launch {
+                snackbarHostState.showSnackbar("Login Berhasil!")
+                onLoginSuccess()
+            }
         }
-        state.error?.let {
-            snackbarHostState.showSnackbar(it)
+        state.error?.let { errorMessage ->
+            scope.launch {
+                snackbarHostState.showSnackbar(errorMessage)
+            }
         }
     }
 
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-    ) { padding ->
+    ) { _ ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
+                .padding(16.dp),
             contentAlignment = Alignment.Center,
         ) {
             Column(
@@ -87,7 +97,12 @@ fun LoginScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true,
-                    enabled = !state.isLoading
+                    enabled = !state.isLoading,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Next
+                    ),
+                    keyboardActions = KeyboardActions(onNext = { passwordFocusRequester.requestFocus() })
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -106,11 +121,22 @@ fun LoginScreen(
                         }
                     },
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Done
+                    ),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true,
-                    enabled = !state.isLoading
+                    enabled = !state.isLoading,
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            if (isFormValid) {
+                                focusManager.clearFocus()
+                                viewModel.login(username, password)
+                            }
+                        }
+                    )
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))

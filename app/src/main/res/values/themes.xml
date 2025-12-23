@@ -2,4 +2,12 @@
 <resources>
 
     <style name="Theme.BookingApp" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo_fixed</item>
+
+        <item name="windowSplashScreenBackground">@color/white</item>
+
+        <item name="postSplashScreenTheme">@style/Theme.BookingApp</item>
+    </style>
 </resources>

@@ -10,7 +10,7 @@ import com.dinzio.bookingapp.features.booking.presentation.screen.BookingListScr
 @Composable
 fun NavGraph(
     navController: NavHostController,
-    startDestination: String = Screen.Login.route
+    startDestination: String,
 ) {
     NavHost(
         navController = navController,

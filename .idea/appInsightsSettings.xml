@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.dinzio.bookingapp" />
+                  <option name="mobileSdkAppId" value="1:359617946818:android:029376478864f693e2875b" />
+                  <option name="projectId" value="bookingapp-e1155" />
+                  <option name="projectNumber" value="359617946818" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

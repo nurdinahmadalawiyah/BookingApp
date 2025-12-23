@@ -18,7 +18,6 @@ suspend fun <T> safeApiCall(apiCall: suspend () -> T): Resource<T> {
                 }
                 Resource.Error(message)
             }
-            // Ini akan menangkap 'throw Exception(response.reason)' dari Repository kamu
             else -> Resource.Error(throwable.message ?: "Kesalahan tidak dikenal")
         }
     }

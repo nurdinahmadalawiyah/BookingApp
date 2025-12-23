@@ -13,6 +13,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
+import com.dinzio.bookingapp.common.navigation.NavGraph
 import com.dinzio.bookingapp.common.theme.BookingAppTheme
 import com.dinzio.bookingapp.features.auth.presentation.screen.LoginScreen
 import dagger.hilt.android.AndroidEntryPoint
@@ -24,16 +26,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             BookingAppTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    LoginScreen(
-                        onLoginSuccess = {
-                            println("Login Berhasil! Token sudah tersimpan.")
-                        }
-                    )
-                }
+                val navController = rememberNavController()
+                NavGraph(navController = navController)
             }
         }
     }

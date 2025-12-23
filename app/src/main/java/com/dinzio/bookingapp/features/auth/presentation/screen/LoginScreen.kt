@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -50,10 +51,7 @@ fun LoginScreen(
 
     LaunchedEffect(state.isLoginSuccess, state.error) {
         if (state.isLoginSuccess) {
-            scope.launch {
-                snackbarHostState.showSnackbar("Login Berhasil!")
-                onLoginSuccess()
-            }
+            onLoginSuccess()
         }
         state.error?.let { errorMessage ->
             scope.launch {
@@ -125,7 +123,8 @@ fun LoginScreen(
                         keyboardType = KeyboardType.Password,
                         imeAction = ImeAction.Done
                     ),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth()
+                        .focusRequester(passwordFocusRequester),
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true,
                     enabled = !state.isLoading,

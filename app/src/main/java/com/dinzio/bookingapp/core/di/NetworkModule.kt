@@ -2,6 +2,7 @@ package com.dinzio.bookingapp.core.di
 
 import com.dinzio.bookingapp.core.data.remote.AuthInterceptor
 import com.dinzio.bookingapp.features.auth.data.source.AuthApiService
+import com.dinzio.bookingapp.features.booking.data.remote.source.BookingApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -54,5 +55,11 @@ object NetworkModule {
     @Singleton
     fun provideAuthApiService(retrofit: Retrofit): AuthApiService {
         return retrofit.create(AuthApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideBookingApiService(retrofit: Retrofit): BookingApiService {
+        return retrofit.create(BookingApiService::class.java)
     }
 }

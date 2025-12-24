@@ -19,52 +19,62 @@ class BookingRepositoryImpl @Inject constructor(
         return bookingDao.getAllBookings()
     }
 
-    override suspend fun refreshBookings(): Resource<Unit> {
-        return loadAndSaveBookings(startIndex = 0, count = 10, shouldDeleteOld = true)
+    override suspend fun refreshBookings(query: String): Resource<Unit> {
+        return loadAndSaveBookings(startIndex = 0, count = 10, shouldDeleteOld = true, query = query)
     }
 
-    override suspend fun loadMoreBookings(startIndex: Int, count: Int): Resource<Unit> {
-        return loadAndSaveBookings(startIndex = startIndex, count = count, shouldDeleteOld = false)
+    override suspend fun getBookingDetailById(id: Int): Resource<BookingEntity> {
+        return safeApiCall {
+            val detail = apiService.getBookingDetail(id)
+            val entity = BookingEntity(
+                bookingid = id,
+                firstname = detail.firstname,
+                lastname = detail.lastname,
+                totalprice = detail.totalprice,
+                depositpaid = detail.depositpaid,
+                checkin = detail.bookingdates.checkin,
+                checkout = detail.bookingdates.checkout,
+                additionalneeds = detail.additionalneeds ?: ""
+            )
+
+            bookingDao.insertBookings(listOf(entity))
+
+            entity
+        }
     }
 
     private suspend fun loadAndSaveBookings(
         startIndex: Int,
         count: Int,
-        shouldDeleteOld: Boolean
+        shouldDeleteOld: Boolean,
+        query: String
     ): Resource<Unit> {
         return safeApiCall {
-            val responseIds = apiService.getBookingIds()
-
+            val responseIds = apiService.getBookingIds(firstname = query)
             val idsToFetch = responseIds.drop(startIndex).take(count)
-            val bookingEntities = mutableListOf<BookingEntity>()
 
-            for (item in idsToFetch) {
-                try {
-                    val detail = apiService.getBookingDetail(item.bookingid)
-                    bookingEntities.add(
-                        BookingEntity(
-                            bookingid = item.bookingid,
-                            firstname = detail.firstname,
-                            lastname = detail.lastname,
-                            totalprice = detail.totalprice,
-                            depositpaid = detail.depositpaid,
-                            checkin = detail.bookingdates.checkin,
-                            checkout = detail.bookingdates.checkout,
-                            additionalneeds = detail.additionalneeds ?: ""
-                        )
-                    )
-                    delay(500)
-                } catch (e: Exception) {
-                    continue
-                }
+            val bookingEntities = idsToFetch.map { item ->
+                BookingEntity(
+                    bookingid = item.bookingid,
+                    firstname = "",
+                    lastname = "",
+                    totalprice = 0,
+                    depositpaid = false,
+                    checkin = "",
+                    checkout = "",
+                    additionalneeds = ""
+                )
+            }
+
+            if (shouldDeleteOld) {
+                bookingDao.deleteAllBookings()
             }
 
             if (bookingEntities.isNotEmpty()) {
-                if (shouldDeleteOld) {
-                    bookingDao.deleteAllBookings()
-                }
                 bookingDao.insertBookings(bookingEntities)
             }
+
+            Resource.Success(Unit)
         }
     }
 }

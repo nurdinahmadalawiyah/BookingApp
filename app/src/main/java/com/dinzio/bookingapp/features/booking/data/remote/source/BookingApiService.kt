@@ -5,10 +5,14 @@ import com.dinzio.bookingapp.features.booking.data.remote.model.BookingIdRespons
 import retrofit2.http.GET
 import retrofit2.http.Headers
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface BookingApiService {
     @GET("booking")
-    suspend fun getBookingIds(): List<BookingIdResponse>
+    suspend fun getBookingIds(
+        @Query("firstname") firstname: String? = null,
+        @Query("lastname") lastname: String? = null
+    ): List<BookingIdResponse>
 
     @Headers("Accept: application/json")
     @GET("booking/{id}")

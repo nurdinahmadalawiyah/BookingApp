@@ -5,7 +5,7 @@ import com.dinzio.bookingapp.features.booking.domain.repository.BookingRepositor
 import javax.inject.Inject
 
 class RefreshBookingsUseCase @Inject constructor(private val repository: BookingRepository) {
-    suspend operator fun invoke(): Resource<Unit> {
-        return repository.refreshBookings()
+    suspend operator fun invoke(query: String): Resource<Unit> {
+        return repository.refreshBookings(query)
     }
 }

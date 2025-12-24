@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 interface BookingRepository {
     fun getBookingsFromDb(): Flow<List<BookingEntity>>
 
-    suspend fun refreshBookings(): Resource<Unit>
+    suspend fun refreshBookings(query: String): Resource<Unit>
 
-    suspend fun loadMoreBookings(startIndex: Int, count: Int): Resource<Unit>
+    suspend fun getBookingDetailById(id: Int): Resource<BookingEntity>
 }

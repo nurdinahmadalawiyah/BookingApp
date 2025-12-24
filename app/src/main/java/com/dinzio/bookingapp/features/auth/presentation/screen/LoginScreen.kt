@@ -22,9 +22,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.dinzio.bookingapp.common.network.Resource
 import com.dinzio.bookingapp.features.auth.presentation.viewModel.LoginViewModel
 import kotlinx.coroutines.launch
 
@@ -143,8 +141,7 @@ fun LoginScreen(
                 Button(
                     onClick = { viewModel.login(username, password) },
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
+                        .fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     enabled = isFormValid && !state.isLoading
                 ) {

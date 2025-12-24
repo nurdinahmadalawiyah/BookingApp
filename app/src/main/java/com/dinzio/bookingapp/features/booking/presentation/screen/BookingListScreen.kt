@@ -13,9 +13,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -42,6 +44,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.dinzio.bookingapp.features.booking.data.local.entity.BookingEntity
 import com.dinzio.bookingapp.features.booking.presentation.component.BookingDetailSheet
 import com.dinzio.bookingapp.features.booking.presentation.component.BookingItem
+import com.dinzio.bookingapp.features.booking.presentation.component.BookingSuccessDialog
+import com.dinzio.bookingapp.features.booking.presentation.component.CreateBookingSheet
 import com.dinzio.bookingapp.features.booking.presentation.viewModel.BookingViewModel
 import kotlinx.coroutines.launch
 
@@ -62,6 +66,10 @@ fun BookingListScreen(
     var showSheet by remember { mutableStateOf(false) }
 
     val searchQuery by viewModel.searchQuery.collectAsState()
+
+    var showCreateSheet by remember { mutableStateOf(false) }
+
+    val createSuccessData by viewModel.createBookingSuccess.collectAsState()
 
     LaunchedEffect(error) {
         error.let {
@@ -86,6 +94,11 @@ fun BookingListScreen(
                     titleContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { showCreateSheet = true }) {
+                Icon(Icons.Default.Add, contentDescription = "Add Booking")
+            }
         }
     ) { paddingValues ->
         Column(
@@ -101,6 +114,22 @@ fun BookingListScreen(
                         onDismiss = { showSheet = false }
                     )
                 }
+            }
+
+            if (showCreateSheet) {
+                CreateBookingSheet(
+                    viewModel = viewModel,
+                    onDismiss = { showCreateSheet = false }
+                )
+            }
+
+            createSuccessData?.let { booking ->
+                BookingSuccessDialog(
+                    booking = booking,
+                    onConfirm = {
+                        viewModel.clearCreateSuccessState()
+                    }
+                )
             }
 
             OutlinedTextField(

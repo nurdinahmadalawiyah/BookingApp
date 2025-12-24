@@ -1,9 +1,11 @@
 package com.dinzio.bookingapp.features.booking.presentation.viewModel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dinzio.bookingapp.common.network.Resource
 import com.dinzio.bookingapp.features.booking.data.local.entity.BookingEntity
+import com.dinzio.bookingapp.features.booking.domain.usecase.CreateBookingUseCase
 import com.dinzio.bookingapp.features.booking.domain.usecase.GetBookingDetailUseCase
 import com.dinzio.bookingapp.features.booking.domain.usecase.GetBookingsUseCase
 import com.dinzio.bookingapp.features.booking.domain.usecase.RefreshBookingsUseCase
@@ -21,7 +23,8 @@ import javax.inject.Inject
 class BookingViewModel @Inject constructor(
     private val getBookingsUseCase: GetBookingsUseCase,
     private val refreshBookingsUseCase: RefreshBookingsUseCase,
-    private val getBookingDetailUseCase: GetBookingDetailUseCase
+    private val getBookingDetailUseCase: GetBookingDetailUseCase,
+    private val createBookingUseCase: CreateBookingUseCase
 ) : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
@@ -34,6 +37,9 @@ class BookingViewModel @Inject constructor(
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery = _searchQuery.asStateFlow()
+
+    private val _createBookingSuccess = MutableStateFlow<BookingEntity?>(null)
+    val createBookingSuccess = _createBookingSuccess.asStateFlow()
 
     val bookings = getBookingsUseCase().stateIn(
         scope = viewModelScope,
@@ -90,5 +96,29 @@ class BookingViewModel @Inject constructor(
             refreshBookingsUseCase(query)
             _isLoading.value = false
         }
+    }
+
+    fun createBooking(entity: BookingEntity) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            Log.d("CREATE_BOOKING", "Memulai proses create untuk: ${entity.firstname}") // LOG 1
+
+            when (val result = createBookingUseCase(entity)) {
+                is Resource.Success -> {
+                    Log.d("CREATE_BOOKING", "API Berhasil! Data: ${result.data}") // LOG 2
+                    _createBookingSuccess.value = result.data
+                }
+                is Resource.Error -> {
+                    Log.e("CREATE_BOOKING", "API Gagal: ${result.message}") // LOG ERROR
+                    _error.value = result.message
+                }
+                else -> {}
+            }
+            _isLoading.value = false
+        }
+    }
+
+    fun clearCreateSuccessState() {
+        _createBookingSuccess.value = null
     }
 }

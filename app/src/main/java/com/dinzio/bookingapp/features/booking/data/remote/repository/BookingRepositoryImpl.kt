@@ -4,6 +4,8 @@ import com.dinzio.bookingapp.common.network.Resource
 import com.dinzio.bookingapp.common.utils.safeApiCall
 import com.dinzio.bookingapp.features.booking.data.local.dao.BookingDao
 import com.dinzio.bookingapp.features.booking.data.local.entity.BookingEntity
+import com.dinzio.bookingapp.features.booking.data.remote.model.BookingDates
+import com.dinzio.bookingapp.features.booking.data.remote.model.BookingRequest
 import com.dinzio.bookingapp.features.booking.data.remote.source.BookingApiService
 import com.dinzio.bookingapp.features.booking.domain.repository.BookingRepository
 import kotlinx.coroutines.delay
@@ -40,6 +42,25 @@ class BookingRepositoryImpl @Inject constructor(
             bookingDao.insertBookings(listOf(entity))
 
             entity
+        }
+    }
+
+    override suspend fun createBooking(entity: BookingEntity): Resource<BookingEntity> {
+        return safeApiCall {
+            val request = BookingRequest(
+                firstname = entity.firstname,
+                lastname = entity.lastname,
+                totalprice = entity.totalprice,
+                depositpaid = entity.depositpaid,
+                bookingdates = BookingDates(entity.checkin, entity.checkout),
+                additionalneeds = entity.additionalneeds
+            )
+            val response = apiService.createBooking(request)
+
+            val newEntity = entity.copy(bookingid = response.bookingid)
+            bookingDao.insertBookings(listOf(newEntity))
+
+            newEntity
         }
     }
 

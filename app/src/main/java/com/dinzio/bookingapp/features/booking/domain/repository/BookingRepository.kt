@@ -10,4 +10,6 @@ interface BookingRepository {
     suspend fun refreshBookings(query: String): Resource<Unit>
 
     suspend fun getBookingDetailById(id: Int): Resource<BookingEntity>
+
+    suspend fun createBooking(entity: BookingEntity): Resource<BookingEntity>
 }

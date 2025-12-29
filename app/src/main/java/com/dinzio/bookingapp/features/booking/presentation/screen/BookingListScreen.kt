@@ -21,8 +21,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -54,19 +56,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.dinzio.bookingapp.features.auth.presentation.viewModel.LoginViewModel
 import com.dinzio.bookingapp.features.booking.data.local.entity.BookingEntity
 import com.dinzio.bookingapp.features.booking.presentation.component.BookingDetailSheet
 import com.dinzio.bookingapp.features.booking.presentation.component.BookingItem
 import com.dinzio.bookingapp.features.booking.presentation.component.BookingSuccessDialog
 import com.dinzio.bookingapp.features.booking.presentation.component.CreateBookingSheet
 import com.dinzio.bookingapp.features.booking.presentation.component.DeleteConfirmationDialog
+import com.dinzio.bookingapp.features.booking.presentation.component.LogoutConfirmationDialog
 import com.dinzio.bookingapp.features.booking.presentation.viewModel.BookingViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BookingListScreen(
-    viewModel: BookingViewModel = hiltViewModel()
+    viewModel: BookingViewModel = hiltViewModel(),
+    loginViewModel: LoginViewModel = hiltViewModel()
 ) {
     val bookings by viewModel.bookings.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -94,6 +99,8 @@ fun BookingListScreen(
 
     var showDeleteDialog by remember { mutableStateOf(false) }
     val isDeleteSuccess by viewModel.deleteBookingSuccess.collectAsState()
+
+    var showLogoutDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(error) {
         error.let {
@@ -155,6 +162,16 @@ fun BookingListScreen(
         )
     }
 
+    if (showLogoutDialog) {
+        LogoutConfirmationDialog(
+            onConfirm = {
+                showLogoutDialog = false
+                loginViewModel.logout()
+            },
+            onDismiss = { showLogoutDialog = false }
+        )
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
@@ -169,7 +186,12 @@ fun BookingListScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface
-                )
+                ),
+                actions = {
+                    IconButton(onClick = { showLogoutDialog = true }) {
+                        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Logout")
+                    }
+                }
             )
         },
         floatingActionButton = {

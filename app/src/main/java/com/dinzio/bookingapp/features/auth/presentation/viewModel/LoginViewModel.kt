@@ -3,6 +3,7 @@ package com.dinzio.bookingapp.features.auth.presentation.viewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dinzio.bookingapp.common.network.Resource
+import com.dinzio.bookingapp.core.data.local.TokenManager
 import com.dinzio.bookingapp.features.auth.domain.usecase.LoginUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,7 +14,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val loginUseCase: LoginUseCase
+    private val loginUseCase: LoginUseCase,
+    private val tokenManager: TokenManager
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LoginState())
@@ -28,6 +30,15 @@ class LoginViewModel @Inject constructor(
                     is Resource.Error -> _state.value = LoginState(error = result.message)
                 }
             }
+        }
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            try {
+                tokenManager.clearToken()
+                _state.update { it.copy(isLoginSuccess = false, error = null) }
+            } catch (e: Exception) { }
         }
     }
 }

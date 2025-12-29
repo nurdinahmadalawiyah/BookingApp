@@ -19,7 +19,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,7 +28,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.dinzio.bookingapp.common.network.Resource
 import com.dinzio.bookingapp.features.booking.data.local.entity.BookingEntity
 import com.dinzio.bookingapp.features.booking.presentation.viewModel.BookingViewModel
 
@@ -46,13 +44,10 @@ fun BookingDetailSheet(
         viewModel.getBookingDetail(bookingId)
     }
 
-    val detailState by viewModel.bookingDetail.collectAsState()
+    val uiState by viewModel.state.collectAsState()
 
     ModalBottomSheet(
-        onDismissRequest = {
-            viewModel.clearDetailState()
-            onDismiss()
-        }
+        onDismissRequest = onDismiss
     ) {
         Column(
             modifier = Modifier
@@ -64,10 +59,11 @@ fun BookingDetailSheet(
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
-            Spacer(modifier = Modifier.height(16.dp))
 
-            when (val state = detailState) {
-                is Resource.Loading -> {
+            Spacer(Modifier.height(16.dp))
+
+            when {
+                uiState.isLoading && uiState.bookingDetail == null -> {
                     Box(
                         Modifier
                             .fillMaxWidth()
@@ -78,25 +74,22 @@ fun BookingDetailSheet(
                     }
                 }
 
-                is Resource.Success -> {
-                    val data = state.data!!
-                    DetailItem(label = "Guest Name", value = "${data.firstname} ${data.lastname}")
-                    DetailItem(label = "Booking ID", value = "#${data.bookingid}")
-                    DetailItem(label = "Stay Period", value = "${data.checkin} - ${data.checkout}")
-                    DetailItem(label = "Total Price", value = "IDR ${data.totalprice}")
-                    DetailItem(
-                        label = "Notes",
-                        value = data.additionalneeds?.ifBlank { "-" } ?: "-")
+                uiState.bookingDetail != null -> {
+                    val data = uiState.bookingDetail!!
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    DetailItem("Guest Name", "${data.firstname} ${data.lastname}")
+                    DetailItem("Booking ID", "#${data.bookingid}")
+                    DetailItem("Stay Period", "${data.checkin} - ${data.checkout}")
+                    DetailItem("Total Price", "IDR ${data.totalprice}")
+                    DetailItem(
+                        "Notes",
+                        data.additionalneeds?.ifBlank { "-" } ?: "-"
+                    )
+
+                    Spacer(Modifier.height(16.dp))
 
                     Button(
-                        onClick = {
-                            onEditClick(data)
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
-                        ),
+                        onClick = { onEditClick(data) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp)
                     ) {
@@ -105,7 +98,7 @@ fun BookingDetailSheet(
                         Text("Edit Booking Data")
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(Modifier.height(16.dp))
 
                     Button(
                         onClick = onDeleteClick,
@@ -121,16 +114,15 @@ fun BookingDetailSheet(
                     }
                 }
 
-                is Resource.Error -> {
+                else -> {
                     Text(
-                        "Gagal memuat data: ${state.message}",
-                        color = MaterialTheme.colorScheme.error
+                        "Data tidak tersedia",
+                        color = MaterialTheme.colorScheme.outline
                     )
                 }
-
-                else -> {}
             }
-            Spacer(modifier = Modifier.height(24.dp))
+
+            Spacer(Modifier.height(24.dp))
         }
     }
 }

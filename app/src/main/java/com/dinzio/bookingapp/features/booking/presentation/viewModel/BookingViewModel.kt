@@ -6,6 +6,7 @@ import com.dinzio.bookingapp.common.network.Resource
 import com.dinzio.bookingapp.core.data.local.TokenManager
 import com.dinzio.bookingapp.features.booking.data.local.entity.BookingEntity
 import com.dinzio.bookingapp.features.booking.domain.usecase.CreateBookingUseCase
+import com.dinzio.bookingapp.features.booking.domain.usecase.DeleteBookingUseCase
 import com.dinzio.bookingapp.features.booking.domain.usecase.GetBookingDetailUseCase
 import com.dinzio.bookingapp.features.booking.domain.usecase.GetBookingsUseCase
 import com.dinzio.bookingapp.features.booking.domain.usecase.RefreshBookingsUseCase
@@ -27,6 +28,7 @@ class BookingViewModel @Inject constructor(
     private val getBookingDetailUseCase: GetBookingDetailUseCase,
     private val createBookingUseCase: CreateBookingUseCase,
     private val updateBookingUseCase: UpdateBookingUseCase,
+    private val deleteBookingUseCase: DeleteBookingUseCase,
     private val tokenManager: TokenManager
 ) : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
@@ -49,6 +51,9 @@ class BookingViewModel @Inject constructor(
 
     private val _updatedData = MutableStateFlow<BookingEntity?>(null)
     val updatedData = _updatedData.asStateFlow()
+
+    private val _deleteBookingSuccess = MutableStateFlow(false)
+    val deleteBookingSuccess = _deleteBookingSuccess.asStateFlow()
 
     val authToken = tokenManager.getToken().stateIn(
         scope = viewModelScope,
@@ -138,7 +143,7 @@ class BookingViewModel @Inject constructor(
         val token = authToken.value
 
         if (token == null) {
-            _error.value = "Sesi habis, silakan login kembali."
+            _error.value = "Token not found, please login again"
             return
         }
 
@@ -168,5 +173,32 @@ class BookingViewModel @Inject constructor(
 
     fun clearError() {
         _error.value = null
+    }
+
+    fun deleteBooking(id: Int) {
+        val token = authToken.value
+
+        if (token == null) {
+            _error.value = "Token not found, please login again"
+            return
+        }
+
+        viewModelScope.launch {
+            _isLoading.value = true
+            when (val result = deleteBookingUseCase(token, id)) {
+                is Resource.Success -> {
+                    _deleteBookingSuccess.value = true
+                }
+                is Resource.Error -> {
+                    _error.value = "Failed Deleted: ${result.message}"
+                }
+                else -> {}
+            }
+            _isLoading.value = false
+        }
+    }
+
+    fun resetDeleteState() {
+        _deleteBookingSuccess.value = false
     }
 }

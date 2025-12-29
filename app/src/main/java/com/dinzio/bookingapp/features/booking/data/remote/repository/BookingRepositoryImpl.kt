@@ -8,7 +8,6 @@ import com.dinzio.bookingapp.features.booking.data.remote.model.BookingDates
 import com.dinzio.bookingapp.features.booking.data.remote.model.BookingRequest
 import com.dinzio.bookingapp.features.booking.data.remote.source.BookingApiService
 import com.dinzio.bookingapp.features.booking.domain.repository.BookingRepository
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
@@ -102,6 +101,17 @@ class BookingRepositoryImpl @Inject constructor(
             bookingDao.insertBookings(listOf(updateEntity))
 
             updateEntity
+        }
+    }
+
+    override suspend fun deleteBooking(
+        token: String,
+        id: Int
+    ): Resource<Unit> {
+        return safeApiCall {
+            apiService.deleteBooking(id, "token=$token")
+            bookingDao.deleteBookingById(id)
+            Resource.Success(Unit)
         }
     }
 

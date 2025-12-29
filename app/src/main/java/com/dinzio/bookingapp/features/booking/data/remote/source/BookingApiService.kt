@@ -5,6 +5,7 @@ import com.dinzio.bookingapp.features.booking.data.remote.model.BookingIdRespons
 import com.dinzio.bookingapp.features.booking.data.remote.model.BookingRequest
 import com.dinzio.bookingapp.features.booking.data.remote.model.BookingResponse
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Headers
@@ -35,4 +36,11 @@ interface BookingApiService {
         @Header("Cookie") token: String,
         @Body booking: BookingRequest
     ): BookingDetailResponse
+
+    @Headers("Content-Type: application/json", "Accept: application/json")
+    @DELETE("booking/{id}")
+    suspend fun deleteBooking(
+        @Path("id") id: Int,
+        @Header("Cookie") token: String
+    ): retrofit2.Response<Unit>
 }

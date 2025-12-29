@@ -14,4 +14,6 @@ interface BookingRepository {
     suspend fun createBooking(entity: BookingEntity): Resource<BookingEntity>
 
     suspend fun updateBooking(token: String, entity: BookingEntity): Resource<BookingEntity>
+
+    suspend fun deleteBooking(token: String, id: Int): Resource<Unit>
 }

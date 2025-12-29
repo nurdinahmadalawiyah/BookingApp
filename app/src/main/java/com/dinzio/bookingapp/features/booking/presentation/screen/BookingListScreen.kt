@@ -59,6 +59,7 @@ import com.dinzio.bookingapp.features.booking.presentation.component.BookingDeta
 import com.dinzio.bookingapp.features.booking.presentation.component.BookingItem
 import com.dinzio.bookingapp.features.booking.presentation.component.BookingSuccessDialog
 import com.dinzio.bookingapp.features.booking.presentation.component.CreateBookingSheet
+import com.dinzio.bookingapp.features.booking.presentation.component.DeleteConfirmationDialog
 import com.dinzio.bookingapp.features.booking.presentation.viewModel.BookingViewModel
 import kotlinx.coroutines.launch
 
@@ -91,6 +92,9 @@ fun BookingListScreen(
     val isUpdateSuccess by viewModel.updateBookingSuccess.collectAsState()
     val updatedData by viewModel.updatedData.collectAsState()
 
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    val isDeleteSuccess by viewModel.deleteBookingSuccess.collectAsState()
+
     LaunchedEffect(error) {
         error.let {
             scope.launch {
@@ -110,12 +114,44 @@ fun BookingListScreen(
         }
     }
 
+    LaunchedEffect(isDeleteSuccess) {
+        if (isDeleteSuccess) {
+            showSheet = false
+            snackbarHostState.showSnackbar("Booking deleted successfully")
+            viewModel.resetDeleteState()
+        }
+    }
+
     if (isUpdateSuccess && updatedData != null) {
         BookingSuccessDialog(
             booking = updatedData!!,
             onConfirm = {
                 viewModel.resetUpdateState()
             }
+        )
+    }
+
+    if (showDeleteDialog) {
+        DeleteConfirmationDialog(
+            onConfirm = {
+                selectedBooking?.let { viewModel.deleteBooking(it.bookingid) }
+                showDeleteDialog = false
+            },
+            onDismiss = { showDeleteDialog = false }
+        )
+    }
+
+    if (showSheet && selectedBooking != null) {
+        BookingDetailSheet(
+            bookingId = selectedBooking!!.bookingid,
+            viewModel = viewModel,
+            onEditClick = { booking ->
+                bookingToEdit = booking
+                showSheet = false
+                showEditSheet = true
+            },
+            onDismiss = { showSheet = false },
+            onDeleteClick = { showDeleteDialog = true }
         )
     }
 
@@ -157,7 +193,8 @@ fun BookingListScreen(
                             showSheet = false
                             showEditSheet = true
                         },
-                        onDismiss = { showSheet = false }
+                        onDismiss = { showSheet = false },
+                        onDeleteClick = { showDeleteDialog = true }
                     )
                 }
             }

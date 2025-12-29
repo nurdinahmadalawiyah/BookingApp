@@ -6,11 +6,17 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dinzio.bookingapp.common.network.Resource
+import com.dinzio.bookingapp.features.booking.data.local.entity.BookingEntity
 import com.dinzio.bookingapp.features.booking.presentation.viewModel.BookingViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -28,7 +35,8 @@ import com.dinzio.bookingapp.features.booking.presentation.viewModel.BookingView
 fun BookingDetailSheet(
     bookingId: Int,
     viewModel: BookingViewModel,
-    onDismiss: () -> Unit
+    onEditClick: (BookingEntity) -> Unit,
+    onDismiss: () -> Unit,
 ) {
     LaunchedEffect(bookingId) {
         viewModel.getBookingDetail(bookingId)
@@ -75,6 +83,20 @@ fun BookingDetailSheet(
                     DetailItem(
                         label = "Notes",
                         value = data.additionalneeds?.ifBlank { "-" } ?: "-")
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    OutlinedButton(
+                        onClick = {
+                            onEditClick(data)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Default.Edit, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Edit Booking Data")
+                    }
                 }
 
                 is Resource.Error -> {

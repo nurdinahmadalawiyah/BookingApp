@@ -1,14 +1,15 @@
 package com.dinzio.bookingapp.features.booking.presentation.viewModel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dinzio.bookingapp.common.network.Resource
+import com.dinzio.bookingapp.core.data.local.TokenManager
 import com.dinzio.bookingapp.features.booking.data.local.entity.BookingEntity
 import com.dinzio.bookingapp.features.booking.domain.usecase.CreateBookingUseCase
 import com.dinzio.bookingapp.features.booking.domain.usecase.GetBookingDetailUseCase
 import com.dinzio.bookingapp.features.booking.domain.usecase.GetBookingsUseCase
 import com.dinzio.bookingapp.features.booking.domain.usecase.RefreshBookingsUseCase
+import com.dinzio.bookingapp.features.booking.domain.usecase.UpdateBookingUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -24,7 +25,9 @@ class BookingViewModel @Inject constructor(
     private val getBookingsUseCase: GetBookingsUseCase,
     private val refreshBookingsUseCase: RefreshBookingsUseCase,
     private val getBookingDetailUseCase: GetBookingDetailUseCase,
-    private val createBookingUseCase: CreateBookingUseCase
+    private val createBookingUseCase: CreateBookingUseCase,
+    private val updateBookingUseCase: UpdateBookingUseCase,
+    private val tokenManager: TokenManager
 ) : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
@@ -40,6 +43,18 @@ class BookingViewModel @Inject constructor(
 
     private val _createBookingSuccess = MutableStateFlow<BookingEntity?>(null)
     val createBookingSuccess = _createBookingSuccess.asStateFlow()
+
+    private val _updateBookingSuccess = MutableStateFlow<Boolean>(false)
+    val updateBookingSuccess = _updateBookingSuccess.asStateFlow()
+
+    private val _updatedData = MutableStateFlow<BookingEntity?>(null)
+    val updatedData = _updatedData.asStateFlow()
+
+    val authToken = tokenManager.getToken().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = null
+    )
 
     val bookings = getBookingsUseCase().stateIn(
         scope = viewModelScope,
@@ -101,15 +116,12 @@ class BookingViewModel @Inject constructor(
     fun createBooking(entity: BookingEntity) {
         viewModelScope.launch {
             _isLoading.value = true
-            Log.d("CREATE_BOOKING", "Memulai proses create untuk: ${entity.firstname}") // LOG 1
 
             when (val result = createBookingUseCase(entity)) {
                 is Resource.Success -> {
-                    Log.d("CREATE_BOOKING", "API Berhasil! Data: ${result.data}") // LOG 2
                     _createBookingSuccess.value = result.data
                 }
                 is Resource.Error -> {
-                    Log.e("CREATE_BOOKING", "API Gagal: ${result.message}") // LOG ERROR
                     _error.value = result.message
                 }
                 else -> {}
@@ -120,5 +132,41 @@ class BookingViewModel @Inject constructor(
 
     fun clearCreateSuccessState() {
         _createBookingSuccess.value = null
+    }
+
+    fun updateBooking(entity: BookingEntity) {
+        val token = authToken.value
+
+        if (token == null) {
+            _error.value = "Sesi habis, silakan login kembali."
+            return
+        }
+
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+
+            when(val result = updateBookingUseCase(token, entity)) {
+                is Resource.Success -> {
+                    _updatedData.value = result.data
+                    _updateBookingSuccess.value = true
+                    _bookingDetail.value = Resource.Success(result.data!!)
+                }
+                is Resource.Error -> {
+                    _error.value = result.message
+                }
+                else -> {}
+            }
+            _isLoading.value = false
+        }
+    }
+
+    fun resetUpdateState() {
+        _updateBookingSuccess.value = false
+        _updatedData.value = null
+    }
+
+    fun clearError() {
+        _error.value = null
     }
 }

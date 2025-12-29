@@ -22,7 +22,12 @@ class BookingRepositoryImpl @Inject constructor(
     }
 
     override suspend fun refreshBookings(query: String): Resource<Unit> {
-        return loadAndSaveBookings(startIndex = 0, count = 10, shouldDeleteOld = true, query = query)
+        return loadAndSaveBookings(
+            startIndex = 0,
+            count = 10,
+            shouldDeleteOld = true,
+            query = query
+        )
     }
 
     override suspend fun getBookingDetailById(id: Int): Resource<BookingEntity> {
@@ -61,6 +66,42 @@ class BookingRepositoryImpl @Inject constructor(
             bookingDao.insertBookings(listOf(newEntity))
 
             newEntity
+        }
+    }
+
+    override suspend fun updateBooking(
+        token: String,
+        entity: BookingEntity
+    ): Resource<BookingEntity> {
+        return safeApiCall {
+            val request = BookingRequest(
+                firstname = entity.firstname,
+                lastname = entity.lastname,
+                totalprice = entity.totalprice,
+                depositpaid = entity.depositpaid,
+                bookingdates = BookingDates(entity.checkin, entity.checkout),
+                additionalneeds = entity.additionalneeds
+            )
+
+            val response = apiService.updateBooking(
+                id = entity.bookingid,
+                token = "token=$token",
+                booking = request
+            )
+
+            val updateEntity = entity.copy(
+                firstname = response.firstname,
+                lastname = response.lastname,
+                totalprice = response.totalprice,
+                depositpaid = response.depositpaid,
+                checkin = response.bookingdates.checkin,
+                checkout = response.bookingdates.checkout,
+                additionalneeds = response.additionalneeds ?: ""
+            )
+
+            bookingDao.insertBookings(listOf(updateEntity))
+
+            updateEntity
         }
     }
 

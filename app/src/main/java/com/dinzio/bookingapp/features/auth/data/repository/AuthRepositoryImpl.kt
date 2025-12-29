@@ -29,7 +29,7 @@ class AuthRepositoryImpl @Inject constructor(
         }
 
         if (result is Resource.Success) {
-            result.data?.let { tokenManager.saveToken(it) }
+            result.data?.let {tokenManager.saveToken(it) }
         }
 
         emit(result)

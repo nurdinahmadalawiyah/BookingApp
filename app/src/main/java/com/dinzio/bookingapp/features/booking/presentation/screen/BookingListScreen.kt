@@ -1,5 +1,6 @@
 package com.dinzio.bookingapp.features.booking.presentation.screen
 
+import android.util.Log
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -30,6 +31,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -67,6 +70,7 @@ fun BookingListScreen(
     val bookings by viewModel.bookings.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
+    val token by viewModel.authToken.collectAsState()
 
     val listState = rememberLazyListState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -81,6 +85,12 @@ fun BookingListScreen(
 
     val createSuccessData by viewModel.createBookingSuccess.collectAsState()
 
+    var showEditSheet by remember { mutableStateOf(false) }
+    var bookingToEdit by remember { mutableStateOf<BookingEntity?>(null) }
+
+    val isUpdateSuccess by viewModel.updateBookingSuccess.collectAsState()
+    val updatedData by viewModel.updatedData.collectAsState()
+
     LaunchedEffect(error) {
         error.let {
             scope.launch {
@@ -89,7 +99,28 @@ fun BookingListScreen(
         }
     }
 
+    LaunchedEffect(error) {
+        error?.let { message ->
+            snackbarHostState.showSnackbar(
+                message = message,
+                actionLabel = "OK",
+                duration = SnackbarDuration.Short
+            )
+             viewModel.clearError()
+        }
+    }
+
+    if (isUpdateSuccess && updatedData != null) {
+        BookingSuccessDialog(
+            booking = updatedData!!,
+            onConfirm = {
+                viewModel.resetUpdateState()
+            }
+        )
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -121,6 +152,11 @@ fun BookingListScreen(
                     BookingDetailSheet(
                         bookingId = it,
                         viewModel = viewModel,
+                        onEditClick = { booking ->
+                            bookingToEdit = booking
+                            showSheet = false
+                            showEditSheet = true
+                        },
                         onDismiss = { showSheet = false }
                     )
                 }
@@ -133,11 +169,23 @@ fun BookingListScreen(
                 )
             }
 
+            if (showEditSheet && bookingToEdit != null) {
+                CreateBookingSheet(
+                    viewModel = viewModel,
+                    bookingEntity = bookingToEdit,
+                    onDismiss = {
+                        showEditSheet = false
+                        bookingToEdit = null
+                    }
+                )
+            }
+
             createSuccessData?.let { booking ->
                 BookingSuccessDialog(
                     booking = booking,
                     onConfirm = {
                         viewModel.clearCreateSuccessState()
+                        viewModel.resetUpdateState()
                     }
                 )
             }
@@ -214,6 +262,8 @@ fun BookingListScreen(
                                 textAlign = TextAlign.Center,
                                 modifier = Modifier.padding(horizontal = 32.dp)
                             )
+
+                            Log.d("UI_DEBUG", "Token saat ini di UI: $token")
                         }
                     }
                 } else {

@@ -36,14 +36,15 @@ import com.dinzio.bookingapp.features.booking.presentation.viewModel.BookingView
 @Composable
 fun CreateBookingSheet(
     viewModel: BookingViewModel,
+    bookingEntity: BookingEntity? = null,
     onDismiss: () -> Unit
 ) {
-    var firstName by remember { mutableStateOf("") }
-    var lastName by remember { mutableStateOf("") }
-    var price by remember { mutableStateOf("") }
-    var checkin by remember { mutableStateOf("") }
-    var checkout by remember { mutableStateOf("") }
-    var additionalNeeds by remember { mutableStateOf("") }
+    var firstName by remember { mutableStateOf(bookingEntity?.firstname ?: "") }
+    var lastName by remember { mutableStateOf(bookingEntity?.lastname ?: "") }
+    var price by remember { mutableStateOf(bookingEntity?.totalprice?.toString() ?: "") }
+    var checkin by remember { mutableStateOf(bookingEntity?.checkin ?: "") }
+    var checkout by remember { mutableStateOf(bookingEntity?.checkout ?: "") }
+    var additionalNeeds by remember { mutableStateOf(bookingEntity?.additionalneeds ?: "") }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -57,7 +58,7 @@ fun CreateBookingSheet(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                "Create New Booking",
+                 if (bookingEntity == null) "Create New Booking" else "Edit Booking",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -128,8 +129,8 @@ fun CreateBookingSheet(
 
             Button(
                 onClick = {
-                    val newBooking = BookingEntity(
-                        bookingid = 0,
+                    val updatedBooking = BookingEntity(
+                        bookingid = bookingEntity?.bookingid ?: 0,
                         firstname = firstName,
                         lastname = lastName,
                         totalprice = price.toIntOrNull() ?: 0,
@@ -138,7 +139,11 @@ fun CreateBookingSheet(
                         checkout = checkout,
                         additionalneeds = additionalNeeds
                     )
-                    viewModel.createBooking(newBooking)
+                    if (bookingEntity == null) {
+                        viewModel.createBooking(updatedBooking)
+                    } else {
+                        viewModel.updateBooking(updatedBooking)
+                    }
                     onDismiss()
                 },
                 enabled = firstName.isNotBlank() && lastName.isNotBlank() && price.isNotBlank() && checkin.isNotBlank() && checkout.isNotBlank(),
@@ -147,7 +152,7 @@ fun CreateBookingSheet(
                     .padding(top = 16.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Confirm Booking")
+                Text(if (bookingEntity == null) "Confirm Booking" else "Save Changes")
             }
             Spacer(modifier = Modifier.height(16.dp))
         }

@@ -6,8 +6,10 @@ import com.dinzio.bookingapp.features.booking.data.remote.model.BookingRequest
 import com.dinzio.bookingapp.features.booking.data.remote.model.BookingResponse
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.Headers
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -25,4 +27,12 @@ interface BookingApiService {
     @Headers("Accept: application/json")
     @POST("booking")
     suspend fun createBooking(@Body booking: BookingRequest): BookingResponse
+
+    @Headers("Content-Type: application/json", "Accept: application/json")
+    @PUT("booking/{id}")
+    suspend fun updateBooking(
+        @Path("id") id: Int,
+        @Header("Cookie") token: String,
+        @Body booking: BookingRequest
+    ): BookingDetailResponse
 }

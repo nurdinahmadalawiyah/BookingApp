@@ -61,10 +61,14 @@ class LoginViewModelTest {
     fun `logout should clear token and reset state`() = runTest {
         viewModel.logout()
 
+        advanceUntilIdle()
+
         coVerify { tokenManager.clearToken() }
+
         viewModel.state.test {
-            val state = awaitItem()
-            assertEquals(false, state.isLoginSuccess)
+            val finalState = expectMostRecentItem()
+            assertEquals(false, finalState.isLoginSuccess)
+            assertEquals(null, finalState.error)
         }
     }
 }

@@ -1,6 +1,5 @@
 package com.dinzio.bookingapp.features.booking.presentation.viewModel
 
-import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.BackoffPolicy
@@ -115,14 +114,14 @@ class BookingViewModel @Inject constructor(
 
     fun getBookingDetail(id: Int) {
         viewModelScope.launch {
-            reduce { copy(isLoading = true) }
+            reduce { copy(isLoading = true, error = null) }
 
             when (val result = getBookingDetailUseCase(id)) {
                 is Resource.Success ->
                     reduce { copy(bookingDetail = result.data) }
 
                 is Resource.Error ->
-                    emitEvent(BookingUiEvent.ShowError(result.message ?: "Unknown error"))
+                    reduce { copy(error = result.message) }
 
                 else -> Unit
             }

@@ -12,5 +12,6 @@ data class BookingEntity(
     val depositpaid: Boolean,
     val checkin: String,
     val checkout: String,
-    val additionalneeds: String?
+    val additionalneeds: String?,
+    val isSynced: Boolean = true
 )

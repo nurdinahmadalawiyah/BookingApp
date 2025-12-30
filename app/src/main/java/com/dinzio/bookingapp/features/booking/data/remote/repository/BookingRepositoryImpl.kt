@@ -50,22 +50,33 @@ class BookingRepositoryImpl @Inject constructor(
     }
 
     override suspend fun createBooking(entity: BookingEntity): Resource<BookingEntity> {
-        return safeApiCall {
+        val tempId = (System.currentTimeMillis() % 100000).toInt()
+        val offlineEntity = entity.copy(
+            bookingid = tempId,
+            isSynced = false
+        )
+        bookingDao.insertBookings(listOf(offlineEntity))
+
+        val result = safeApiCall {
             val request = BookingRequest(
                 firstname = entity.firstname,
                 lastname = entity.lastname,
                 totalprice = entity.totalprice,
                 depositpaid = entity.depositpaid,
                 bookingdates = BookingDates(entity.checkin, entity.checkout),
-                additionalneeds = entity.additionalneeds
+                additionalneeds = entity.additionalneeds ?: ""
             )
+
             val response = apiService.createBooking(request)
 
-            val newEntity = entity.copy(bookingid = response.bookingid)
-            bookingDao.insertBookings(listOf(newEntity))
+            bookingDao.deleteBookingById(tempId)
+            val finalEntity = entity.copy(bookingid = response.bookingid, isSynced = true)
+            bookingDao.insertBookings(listOf(finalEntity))
 
-            newEntity
+            finalEntity
         }
+
+        return result
     }
 
     override suspend fun updateBooking(

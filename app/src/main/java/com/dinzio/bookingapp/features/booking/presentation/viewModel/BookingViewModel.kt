@@ -1,10 +1,19 @@
 package com.dinzio.bookingapp.features.booking.presentation.viewModel
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.WorkRequest
 import com.dinzio.bookingapp.common.network.Resource
 import com.dinzio.bookingapp.core.data.local.TokenManager
 import com.dinzio.bookingapp.features.booking.data.local.entity.BookingEntity
+import com.dinzio.bookingapp.features.booking.data.worker.SyncBookingWorker
 import com.dinzio.bookingapp.features.booking.domain.usecase.CreateBookingUseCase
 import com.dinzio.bookingapp.features.booking.domain.usecase.DeleteBookingUseCase
 import com.dinzio.bookingapp.features.booking.domain.usecase.GetBookingDetailUseCase
@@ -23,6 +32,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @HiltViewModel
@@ -33,7 +43,8 @@ class BookingViewModel @Inject constructor(
     private val createBookingUseCase: CreateBookingUseCase,
     private val updateBookingUseCase: UpdateBookingUseCase,
     private val deleteBookingUseCase: DeleteBookingUseCase,
-    tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    private val application: Application
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(BookingUiState())
@@ -51,6 +62,7 @@ class BookingViewModel @Inject constructor(
     init {
         observeSearch()
         refresh()
+        scheduleOfflineSync()
     }
 
     /* ---------------- CORE HELPERS ---------------- */
@@ -123,13 +135,16 @@ class BookingViewModel @Inject constructor(
         viewModelScope.launch {
             reduce { copy(isLoading = true) }
 
-            when (val result = createBookingUseCase(entity)) {
+            val offlineBooking = entity.copy(isSynced = false)
+
+            when (val result = createBookingUseCase(offlineBooking)) {
                 is Resource.Success ->
                     emitEvent(BookingUiEvent.BookingCreated(result.data!!))
 
-                is Resource.Error ->
+                is Resource.Error -> {
+                    scheduleOfflineSync()
                     emitEvent(BookingUiEvent.ShowError(result.message ?: "Create failed"))
-
+                }
                 else -> Unit
             }
 
@@ -177,5 +192,26 @@ class BookingViewModel @Inject constructor(
 
             reduce { copy(isLoading = false) }
         }
+    }
+
+    fun scheduleOfflineSync() {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val syncRequest = OneTimeWorkRequestBuilder<SyncBookingWorker>()
+            .setConstraints(constraints)
+            .setBackoffCriteria(
+                BackoffPolicy.EXPONENTIAL,
+                WorkRequest.MIN_BACKOFF_MILLIS,
+                TimeUnit.MILLISECONDS
+            )
+            .build()
+
+        WorkManager.getInstance(application).enqueueUniqueWork(
+            "sync_bookings",
+            ExistingWorkPolicy.KEEP,
+            syncRequest
+        )
     }
 }

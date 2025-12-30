@@ -44,7 +44,7 @@ class BookingViewModel @Inject constructor(
     private val updateBookingUseCase: UpdateBookingUseCase,
     private val deleteBookingUseCase: DeleteBookingUseCase,
     private val tokenManager: TokenManager,
-    private val application: Application
+    private val workManager: WorkManager
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(BookingUiState())
@@ -208,7 +208,7 @@ class BookingViewModel @Inject constructor(
             )
             .build()
 
-        WorkManager.getInstance(application).enqueueUniqueWork(
+        workManager.enqueueUniqueWork(
             "sync_bookings",
             ExistingWorkPolicy.KEEP,
             syncRequest

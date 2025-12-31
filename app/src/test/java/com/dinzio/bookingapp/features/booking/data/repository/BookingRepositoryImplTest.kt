@@ -65,6 +65,48 @@ class BookingRepositoryImplTest {
     }
 
     @Test
+    fun `getBookingDetailById success should fetch from api and save to dao`() = runTest {
+        // Arrange
+        val bookingId = 123
+        val mockDetailResponse = BookingDetailResponse(
+            firstname = "John",
+            lastname = "Doe",
+            totalprice = 100,
+            depositpaid = true,
+            bookingdates = BookingDates("2023-12-01", "2023-12-02"),
+            additionalneeds = "Late checkout"
+        )
+
+        coEvery { apiService.getBookingDetail(bookingId) } returns mockDetailResponse
+
+        // Act
+        val result = repository.getBookingDetailById(bookingId)
+
+        // Assert
+        assert(result is Resource.Success)
+        val data = (result as Resource.Success).data
+        assertEquals("John", data?.firstname)
+        assertEquals(bookingId, data?.bookingid)
+
+        coVerify { bookingDao.insertBookings(any()) }
+    }
+
+    @Test
+    fun `getBookingDetailById failure should return error resource`() = runTest {
+        // Arrange
+        val bookingId = 999
+        val errorMsg = "HTTP 404 Not Found"
+        coEvery { apiService.getBookingDetail(bookingId) } throws Exception(errorMsg)
+
+        // Act
+        val result = repository.getBookingDetailById(bookingId)
+
+        // Assert
+        assert(result is Resource.Error)
+        assertEquals(errorMsg, (result as Resource.Error).message)
+    }
+
+    @Test
     fun `createBooking success should call api and save to dao`() = runTest {
         // Arrange
         val entity = BookingEntity(

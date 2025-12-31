@@ -8,6 +8,7 @@ import com.dinzio.bookingapp.features.booking.data.local.entity.BookingEntity
 import com.dinzio.bookingapp.features.booking.domain.usecase.*
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -222,6 +223,69 @@ class BookingViewModelTest {
             val event = awaitItem()
             assert(event is BookingUiEvent.ShowError)
             assertEquals(errorMessage, (event as BookingUiEvent.ShowError).message)
+        }
+    }
+
+    @Test
+    fun `updateBooking success should emit BookingUpdated event`() = runTest {
+        // Arrange
+        val token = "fake_token"
+        val mockBooking = BookingEntity(
+            bookingid = 123,
+            firstname = "John",
+            lastname = "Update",
+            totalprice = 150,
+            depositpaid = true,
+            checkin = "2023-10-01",
+            checkout = "2023-10-05",
+            additionalneeds = "Late Checkout"
+        )
+
+        every { tokenManager.getToken() } returns flowOf(token)
+
+        coEvery { updateBookingUseCase(any(), any()) } returns Resource.Success(mockBooking)
+
+        // Act & Assert
+        viewModel.event.test {
+            viewModel.updateBooking(mockBooking)
+
+            val event = awaitItem()
+
+            assert(event is BookingUiEvent.BookingUpdated)
+            assertEquals(mockBooking.bookingid, (event as BookingUiEvent.BookingUpdated).data.bookingid)
+        }
+
+        // Verify
+        coVerify { updateBookingUseCase(any(), any()) }
+    }
+
+    @Test
+    fun `updateBooking failure should emit ShowError event`() = runTest {
+        // Arrange
+        val token = "valid_token"
+        val mockBooking = BookingEntity(
+            bookingid = 123,
+            firstname = "X",
+            lastname = "Y",
+            totalprice = 0,
+            depositpaid = false,
+            checkin = "",
+            checkout = "",
+            additionalneeds = ""
+        )
+        val errorMsg = "Update Failed"
+
+        every { tokenManager.getToken() } returns flowOf(token)
+        coEvery { updateBookingUseCase(any(), any()) } returns Resource.Error(errorMsg)
+
+        viewModel.event.test {
+            // Act
+            viewModel.updateBooking(mockBooking)
+
+            // Assert
+            val event = awaitItem()
+            assert(event is BookingUiEvent.ShowError)
+            assertEquals(errorMsg, (event as BookingUiEvent.ShowError).message)
         }
     }
 }

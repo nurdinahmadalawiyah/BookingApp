@@ -144,4 +144,65 @@ class BookingRepositoryImplTest {
         coVerify { apiService.createBooking(any()) }
         coVerify { bookingDao.insertBookings(any<List<BookingEntity>>()) }
     }
+
+    @Test
+    fun `updateBooking success should call api and save to dao`() = runTest {
+        val bookingId = 123
+        val entity = BookingEntity(
+            bookingid = bookingId,
+            firstname = "John",
+            lastname = "Doe",
+            totalprice = 100,
+            depositpaid = true,
+            checkin = "2023-01-01",
+            checkout = "2023-01-02",
+            additionalneeds = "WiFi"
+        )
+
+        val mockApiResponse = BookingDetailResponse(
+            firstname = "John",
+            lastname = "Doe",
+            totalprice = 100,
+            depositpaid = true,
+            bookingdates = BookingDates("2023-01-01", "2023-01-02"),
+            additionalneeds = "WiFi"
+        )
+
+        coEvery {
+            apiService.updateBooking(any(), any(), any())
+        } returns mockApiResponse
+
+        coEvery { bookingDao.insertBookings(any()) } returns Unit
+
+        val result = repository.updateBooking("mock_token", entity)
+
+        assert(result is Resource.Success)
+        coVerify { apiService.updateBooking(eq(bookingId), any(), any()) }
+        coVerify { bookingDao.insertBookings(any()) }
+    }
+
+    @Test
+    fun `updateBooking failure should return error resource`() = runTest {
+        // Arrange
+        val token = "invalid_token"
+        val entity = BookingEntity(
+            bookingid = 1,
+            firstname = "X",
+            lastname = "Y",
+            totalprice = 0,
+            depositpaid = false,
+            checkin = "",
+            checkout = "",
+            additionalneeds = ""
+        )
+
+        coEvery { apiService.updateBooking(any(), any(), any()) } throws Exception("Unauthorized")
+
+        // Act
+        val result = repository.updateBooking(token, entity)
+
+        // Assert
+        assert(result is Resource.Error)
+        assertEquals("Unauthorized", (result as Resource.Error).message)
+    }
 }

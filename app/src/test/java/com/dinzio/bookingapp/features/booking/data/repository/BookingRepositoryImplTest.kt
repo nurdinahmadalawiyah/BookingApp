@@ -18,6 +18,7 @@ import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
+import retrofit2.Response
 
 class BookingRepositoryImplTest {
     private val apiService: BookingApiService = mockk()
@@ -204,5 +205,27 @@ class BookingRepositoryImplTest {
         // Assert
         assert(result is Resource.Error)
         assertEquals("Unauthorized", (result as Resource.Error).message)
+    }
+
+    @Test
+    fun `deleteBooking success should call api and then delete from dao`() = runTest {
+        // Arrange
+        val token = "mock_token"
+        val bookingId = 123
+
+        val mockResponse = Response.success(Unit)
+
+        coEvery {
+            apiService.deleteBooking(bookingId, "token=$token")
+        } returns mockResponse
+        coEvery { bookingDao.deleteBookingById(bookingId) } returns Unit
+
+        // Act
+        val result = repository.deleteBooking(token, bookingId)
+
+        // Assert
+        assert(result is Resource.Success)
+        coVerify { apiService.deleteBooking(bookingId, "token=$token") }
+        coVerify { bookingDao.deleteBookingById(bookingId) }
     }
 }

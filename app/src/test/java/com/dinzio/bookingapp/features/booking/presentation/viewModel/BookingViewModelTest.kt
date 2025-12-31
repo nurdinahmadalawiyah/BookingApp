@@ -288,4 +288,48 @@ class BookingViewModelTest {
             assertEquals(errorMsg, (event as BookingUiEvent.ShowError).message)
         }
     }
+
+    @Test
+    fun `deleteBooking success should emit BookingDeleted event`() = runTest {
+        // Arrange
+        val token = "fake_token"
+        val bookingId = 123
+
+        every { tokenManager.getToken() } returns flowOf(token)
+
+        coEvery { deleteBookingUseCase(any(), eq(bookingId)) } returns Resource.Success(Unit)
+
+        viewModel.event.test {
+            // Act
+            viewModel.deleteBooking(bookingId)
+
+            // Assert
+            val event = awaitItem()
+            assert(event is BookingUiEvent.BookingDeleted)
+        }
+
+        coVerify { deleteBookingUseCase(any(), eq(bookingId)) }
+    }
+
+    @Test
+    fun `deleteBooking failure should emit ShowError event`() = runTest {
+        // Arrange
+        val token = "fake_token"
+        val bookingId = 123
+        val errorMessage = "Delete failed"
+
+        every { tokenManager.getToken() } returns flowOf(token)
+
+        coEvery { deleteBookingUseCase(any(), eq(bookingId)) } returns Resource.Error(errorMessage)
+
+        viewModel.event.test {
+            // Act
+            viewModel.deleteBooking(bookingId)
+
+            // Assert
+            val event = awaitItem()
+            assert(event is BookingUiEvent.ShowError)
+            assertEquals(errorMessage, (event as BookingUiEvent.ShowError).message)
+        }
+    }
 }

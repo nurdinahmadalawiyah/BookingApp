@@ -1,6 +1,5 @@
 package com.dinzio.bookingapp.features.booking.presentation.viewModel
 
-import android.app.Application
 import androidx.work.WorkManager
 import app.cash.turbine.test
 import com.dinzio.bookingapp.common.network.Resource
@@ -115,26 +114,29 @@ class BookingViewModelTest {
     fun `getBookingDetail success should update bookingDetail in state`() = runTest {
         // Arrange
         val bookingId = 123
-        val mockBooking = BookingEntity(bookingid = bookingId, firstname = "John", lastname = "Doe", totalprice = 100, depositpaid = true, checkin = "", checkout = "", additionalneeds = "")
+        val mockBooking = BookingEntity(
+            bookingid = bookingId,
+            firstname = "John",
+            lastname = "Doe",
+            totalprice = 100,
+            depositpaid = true,
+            checkin = "",
+            checkout = "",
+            additionalneeds = ""
+        )
 
-        // Gunakan delay kecil agar Turbine sempat menangkap state loading
         coEvery { getBookingDetailUseCase(bookingId) } coAnswers {
             delay(10)
             Resource.Success(mockBooking)
         }
 
         viewModel.state.test {
-            // 1. Cek State Awal
             assertEquals(null, awaitItem().bookingDetail)
-
-            // 2. Trigger Action
             viewModel.getBookingDetail(bookingId)
 
-            // 3. Tangkap State Loading (true)
             val loadingState = awaitItem()
             assertEquals(true, loadingState.isLoading)
 
-            // 4. Tangkap State Final (false + data)
             val finalState = awaitItem()
             assertEquals(false, finalState.isLoading)
             assertEquals(mockBooking, finalState.bookingDetail)
@@ -152,7 +154,7 @@ class BookingViewModelTest {
         }
 
         viewModel.state.test {
-            awaitItem() // Skip state awal
+            awaitItem()
 
             // Act
             viewModel.getBookingDetail(bookingId)
@@ -164,6 +166,62 @@ class BookingViewModelTest {
             val errorState = awaitItem()
             assertEquals(false, errorState.isLoading)
             assertEquals(errorMessage, errorState.error)
+        }
+    }
+
+    @Test
+    fun `createBooking success should emit BookingCreated event`() = runTest {
+        // Arrange
+        val mockBooking = BookingEntity(
+            bookingid = 0,
+            firstname = "Dinzio",
+            lastname = "Dev",
+            totalprice = 200,
+            depositpaid = true,
+            checkin = "2023-10-01",
+            checkout = "2023-10-05",
+            additionalneeds = "Breakfast"
+        )
+        val successResult = mockBooking.copy(bookingid = 999)
+
+        coEvery { createBookingUseCase(any()) } returns Resource.Success(successResult)
+
+        viewModel.event.test {
+            // Act
+            viewModel.createBooking(mockBooking)
+
+            // Assert Event
+            val event = awaitItem()
+            assert(event is BookingUiEvent.BookingCreated)
+            assertEquals(successResult, (event as BookingUiEvent.BookingCreated).data)
+        }
+    }
+
+    @Test
+    fun `createBooking failure should emit ShowError event`() = runTest {
+        // Arrange
+        val mockBooking = BookingEntity(
+            bookingid = 0,
+            firstname = "Fail",
+            lastname = "Test",
+            totalprice = 0,
+            depositpaid = false,
+            checkin = "",
+            checkout = "",
+            additionalneeds = ""
+        )
+        val errorMessage = "Failed to create booking"
+
+        coEvery { createBookingUseCase(any()) } returns Resource.Error(errorMessage)
+
+        viewModel.event.test {
+            // Act
+            viewModel.createBooking(mockBooking)
+
+            // Assert Event
+            val event = awaitItem()
+            assert(event is BookingUiEvent.ShowError)
+            assertEquals(errorMessage, (event as BookingUiEvent.ShowError).message)
         }
     }
 }

@@ -35,6 +35,16 @@ A modern Android reservation application built with **Jetpack Compose** and foll
 
 ---
 
+## API Reference
+
+This application consumes the **RESTful-booker** API, a ready-to-use platform for testing booking-related logic.
+
+* **Base URL**: `https://restful-booker.herokuapp.com`
+* **Documentation**: [Restful-booker API Docs](https://restful-booker.herokuapp.com/apidoc/index.html)
+* **Features Used**: Auth (Create Token), Booking (Get, Create, Update, Delete).
+
+---
+
 ## Project Structure
 
 The project follows a feature-based Clean Architecture structure:
